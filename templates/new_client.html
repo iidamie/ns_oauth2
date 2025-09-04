@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}创建新应用 - Nodeseek OAuth2 授权服务{% endblock %}
+
+{% block head %}
+<style>
+    .form-container {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    
+    .form-section {
+        margin-bottom: 32px;
+    }
+    
+    .form-section-title {
+        font-weight: 600;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .form-section-title i {
+        margin-right: 8px;
+        color: var(--primary-color);
+    }
+    
+    .form-card {
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 24px;
+    }
+    
+    .form-label {
+        font-weight: 500;
+    }
+    
+    .helper-text {
+        color: var(--muted-color);
+        font-size: 0.9rem;
+        margin-top: 6px;
+    }
+    
+    .alert-info {
+        background-color: #f0f7ff;
+        border-color: #c8deff;
+    }
+    
+    .copy-credential-btn {
+        flex-shrink: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="form-container">
+        <div class="mb-4">
+            <a href="/clients" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>返回应用列表
+            </a>
+        </div>
+        
+        <h1 class="h2 mb-4">创建新应用</h1>
+        
+        <div class="alert alert-info mb-4">
+            <h5 class="alert-heading d-flex align-items-center">
+                <i class="bi bi-info-circle-fill me-2"></i> 提示
+            </h5>
+            <p class="mb-0">创建应用后，您将获得客户端ID和密钥，用于将Nodeseek OAuth2授权集成到您的网站或应用中。</p>
+        </div>
+        
+        <form id="createClientForm" class="form-card">
+            <div class="form-section">
+                <div class="form-section-title">
+                    <i class="bi bi-grid"></i>基本信息
+                </div>
+                
+                <div class="mb-3">
+                    <label for="clientName" class="form-label">应用名称 <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="clientName" required>
+                    <div class="helper-text">为您的应用取一个简洁明了的名称</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="clientWebsite" class="form-label">网站地址 <span class="text-danger">*</span></label>
+                    <input type="url" class="form-control" id="clientWebsite" placeholder="https://" required>
+                    <div class="helper-text">您应用的网站首页地址</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="clientDescription" class="form-label">应用描述 <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="clientDescription" rows="3" required></textarea>
+                    <div class="helper-text">简短描述您的应用功能和用途</div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <div class="form-section-title">
+                    <i class="bi bi-link"></i>授权配置
+                </div>
+                
+                <div class="mb-3">
+                    <label for="redirectURIs" class="form-label">重定向 URI <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="redirectURIs" rows="3" placeholder="https://example.com/callback" required></textarea>
+                    <div class="helper-text">授权成功后重定向的地址，多个地址请用英文逗号分隔</div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <a href="/clients" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>返回
+                </a>
+                <button type="submit" class="btn btn-primary" id="createBtn">
+                    <i class="bi bi-plus-lg me-2"></i>创建应用
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 创建成功模态框 -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="successModalLabel">应用创建成功</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    请务必保存以下信息，客户端密钥仅显示一次！
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">客户端ID</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="clientIdDisplay" readonly>
+                        <button class="btn btn-outline-secondary copy-credential-btn" type="button" onclick="copyCredential('clientIdDisplay')">
+                            复制
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">客户端密钥</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="clientSecretDisplay" readonly>
+                        <button class="btn btn-outline-secondary copy-credential-btn" type="button" onclick="copyCredential('clientSecretDisplay')">
+                            复制
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="/clients" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-2"></i>确认并返回
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('createClientForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // 获取表单数据
+        const clientData = {
+            name: document.getElementById('clientName').value,
+            website: document.getElementById('clientWebsite').value,
+            description: document.getElementById('clientDescription').value,
+            redirect_uris: document.getElementById('redirectURIs').value
+        };
+        
+        // 禁用按钮
+        const button = document.getElementById('createBtn');
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> 创建中...';
+        
+        // 发送请求
+        fetch('/api/clients', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(clientData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // 显示成功信息并填充客户端ID和密钥
+                document.getElementById('clientIdDisplay').value = data.client.client_id;
+                document.getElementById('clientSecretDisplay').value = data.client.client_secret;
+                
+                // 显示模态框
+                const modal = new bootstrap.Modal(document.getElementById('successModal'));
+                modal.show();
+            } else {
+                alert('创建失败: ' + data.message);
+                button.disabled = false;
+                button.innerHTML = '<i class="bi bi-plus-lg me-2"></i>创建应用';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('创建过程中发生错误');
+            button.disabled = false;
+            button.innerHTML = '<i class="bi bi-plus-lg me-2"></i>创建应用';
+        });
+    });
+    
+    function copyCredential(elementId) {
+        const element = document.getElementById(elementId);
+        element.select();
+        document.execCommand('copy');
+        
+        // 显示复制成功的提示
+        const button = element.nextElementSibling;
+        button.innerText = '已复制!';
+        setTimeout(() => {
+            button.innerText = '复制';
+        }, 2000);
+    }
+</script>
+{% endblock %}

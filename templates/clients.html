@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}我的应用 - Nodeseek OAuth2 授权服务{% endblock %}
+
+{% block head %}
+<style>
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 32px;
+    }
+    
+    .page-title {
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+    
+    .client-card {
+        margin-bottom: 24px;
+        transition: transform 0.2s;
+    }
+    
+    .client-card:hover {
+        transform: translateY(-4px);
+    }
+    
+    .client-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+    
+    .client-logo {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        background-color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        color: white;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    .client-name {
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+    
+    .client-website {
+        color: var(--muted-color);
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .client-website a {
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        max-width: 200px;
+        display: inline-block;
+    }
+    
+    .client-description {
+        margin-bottom: 16px;
+        color: var(--text-color);
+    }
+    
+    .client-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 16px;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .client-date {
+        color: var(--muted-color);
+        font-size: 0.9rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 0;
+    }
+    
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background-color: #f0f4ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: var(--primary-color);
+        margin: 0 auto 24px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="page-header">
+        <h1 class="page-title">我的应用</h1>
+        <a href="/clients/new" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i>创建新应用
+        </a>
+    </div>
+    
+    <div class="row">
+        {% if clients %}
+            {% for client in clients %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card client-card">
+                    <div class="card-body">
+                        <div class="client-header">
+                            <div class="client-logo">
+                                <i class="bi bi-grid"></i>
+                            </div>
+                            <div>
+                                <div class="client-name">{{ client.client_name }}</div>
+                                <div class="client-website">
+                                    <i class="bi bi-link-45deg me-1"></i>
+                                    <a href="{{ client.website }}" target="_blank" class="text-muted">{{ client.website }}</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="client-description">
+                            {{ client.description|truncate(100) }}
+                        </div>
+                        
+                        <div class="client-meta">
+                            <div class="client-date">
+                                <i class="bi bi-calendar3 me-1"></i>
+                                创建于 {{ client.created_at[:10] }}
+                            </div>
+                            <a href="/clients/{{ client.client_id }}" class="btn btn-sm btn-outline-primary">
+                                查看详情
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="bi bi-grid"></i>
+                </div>
+                <h3 class="h4">您还没有创建应用</h3>
+                <p class="text-muted mb-4">创建一个新应用，将 Nodeseek 账号授权集成到您的网站</p>
+                <a href="/clients/new" class="btn btn-primary">
+                    <i class="bi bi-plus-lg me-2"></i>创建新应用
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

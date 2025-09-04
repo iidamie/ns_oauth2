@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+curl-cffi
+python-jose[cryptography]
+python-jwt
+python-multipart

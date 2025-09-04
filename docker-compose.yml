@@ -1,0 +1,16 @@
+version: "3"
+services:
+  ns_oauth2:
+    container_name: ns_oauth2
+    image: ghcr.io/iidamie/ns_oauth2:latest
+    restart: always
+    ports:
+      - "5001:5001"
+    # volumes:
+      # - ./data:/app/data
+    environment:
+      - DB_PATH=/app/data/oauth_db.sqlite
+      - COOKIE=session=xxxxxxxxxx; smac=xxxxxxxxxx
+      - ADMIN_ID=xxxx
+      - MIN_CLIENT_CREATION_RANK=1
+      - JWT_SECRET=your-secure-jwt-secret

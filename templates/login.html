@@ -1,0 +1,490 @@
+{% extends "base.html" %}
+
+{% block title %}登录 - Nodeseek OAuth2 授权服务{% endblock %}
+
+{% block head %}
+<style>
+    #step2, #step3 {
+        display: none;
+    }
+    
+    .steps {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 32px;
+        position: relative;
+    }
+    
+    .steps:before {
+        content: '';
+        position: absolute;
+        top: 24px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: #e2e8f0;
+        z-index: 0;
+    }
+    
+    .step {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+        flex: 1;
+    }
+    
+    .step-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background-color: white;
+        border: 2px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 8px;
+        color: var(--muted-color);
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    
+    .step.active .step-icon {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        background-color: #f0f4ff;
+    }
+    
+    .step.completed .step-icon {
+        border-color: var(--primary-color);
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .step-label {
+        font-size: 0.9rem;
+        color: var(--muted-color);
+        font-weight: 500;
+    }
+    
+    .step.active .step-label {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+    
+    .verification-instructions {
+        background-color: #f0f7ff;
+        border-radius: 12px;
+        padding: 20px;
+        position: relative;
+        margin-bottom: 24px;
+    }
+    
+    .instruction-title {
+        display: flex;
+        align-items: center;
+        color: var(--primary-color);
+        font-weight: 600;
+        margin-bottom: 16px;
+    }
+    
+    .instruction-steps {
+        padding-left: 20px;
+    }
+    
+    .instruction-steps li {
+        margin-bottom: 12px;
+        position: relative;
+        padding-left: 8px;
+    }
+    
+    .instruction-steps li:last-child {
+        margin-bottom: 0;
+    }
+    
+    .ns-link {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    
+    .ns-link:hover {
+        color: var(--primary-hover);
+        text-decoration: underline;
+    }
+    
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(77, 108, 245, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(77, 108, 245, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(77, 108, 245, 0); }
+    }
+    
+    .pulse-animation {
+        animation: pulse 2s infinite;
+    }
+    
+    .success-animation {
+        text-align: center;
+        padding: 20px 0;
+    }
+    
+    .success-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background-color: #d1fadf;
+        color: #10b981;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        margin: 0 auto 24px;
+    }
+    
+    .back-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted-color);
+        transition: all 0.2s;
+        font-weight: 500;
+    }
+    
+    .back-btn:hover {
+        color: var(--text-color);
+    }
+    
+    /* 验证码容器与复制按钮优化 */
+    .verification-code-container {
+        position: relative;
+        display: inline-block;
+        margin: 0 auto;
+    }
+    
+    .verification-code {
+        font-family: 'Courier New', monospace;
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: var(--primary-color);
+        padding: 12px 20px;
+        border: 2px dashed var(--secondary-color);
+        border-radius: 8px;
+        background-color: #f5f7ff;
+        display: inline-block;
+        min-width: 220px;
+        text-align: center;
+    }
+    
+    .copy-code-btn {
+        position: absolute;
+        top: 50%;
+        right: -44px;
+        transform: translateY(-50%);
+        background-color: #f0f4ff;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        color: var(--primary-color);
+        padding: 6px 12px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .copy-code-btn:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .copy-success {
+        position: absolute;
+        top: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: rgba(0,0,0,0.8);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    
+    .copy-success.show {
+        opacity: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ns-container">
+    <div class="card p-4 fade-in">
+        <div class="steps">
+            <div class="step active" id="step1-indicator">
+                <div class="step-icon">1</div>
+                <div class="step-label">输入ID</div>
+            </div>
+            <div class="step" id="step2-indicator">
+                <div class="step-icon">2</div>
+                <div class="step-label">发送验证码</div>
+            </div>
+            <div class="step" id="step3-indicator">
+                <div class="step-icon">3</div>
+                <div class="step-label">完成验证</div>
+            </div>
+        </div>
+        
+        <div id="step1">
+            <h2 class="h3 text-center mb-2">Nodeseek 账号登录</h2>
+            <p class="text-muted text-center mb-4">使用您的 Nodeseek 账号进行授权登录</p>
+            
+            <div class="mb-4">
+                <label for="user_id" class="form-label">Nodeseek 数字 ID</label>
+                <input type="text" class="form-control form-control-lg" id="user_id" placeholder="数字id" autocomplete="off">
+                <div class="form-text">您可以在 Nodeseek 个人主页网址 https://www.nodeseek.com/space/xxxx 中查看，其中 xxxx 则为你的数字id</div>
+            </div>
+            
+            <button type="button" class="btn btn-primary btn-lg w-100" id="getVerificationBtn" onclick="requestVerificationCode()">
+                <i class="bi bi-arrow-right-circle me-2"></i>获取验证码
+            </button>
+        </div>
+        
+        <div id="step2">
+            <h2 class="h3 text-center mb-3">发送验证码</h2>
+            
+            <div class="text-center mb-4">
+                <div class="verification-code-container">
+                    <div class="copy-success" id="copySuccess">已复制!</div>
+                    <div class="verification-code pulse-animation">
+                        <span id="verification_code"></span>
+                    </div>
+                    <button type="button" class="copy-code-btn" id="copyCodeBtn" onclick="copyVerificationCode()">
+                        复制
+                    </button>
+                </div>
+            </div>
+            
+            <div class="verification-instructions">
+                <div class="instruction-title">
+                    <i class="bi bi-info-circle me-2"></i>验证步骤
+                </div>
+                <ol class="instruction-steps">
+                    <li>复制上方验证码</li>
+                    <li>
+                        <a href="https://www.nodeseek.com/notification#/message?mode=talk&to=9037" target="_blank" class="ns-link">
+                            点击此链接打开 Nodeseek 私信页面
+                            <i class="bi bi-box-arrow-up-right ms-1"></i>
+                        </a>
+                    </li>
+                    <li>将验证码发送给用户 <strong>idamie</strong> (ID: 9037)</li>
+                    <li>验证码发送后点击下方按钮完成验证</li>
+                </ol>
+            </div>
+            
+            <button type="button" class="btn btn-primary btn-lg w-100 mb-3" id="verifyBtn" onclick="verifyMessage()">
+                <span id="verifyBtnText">我已发送验证码</span>
+                <span id="verifyBtnLoader" class="loader me-2" style="display:none;"></span>
+            </button>
+            
+            <button type="button" class="back-btn w-100" onclick="backToStep1()">
+                <i class="bi bi-arrow-left me-2"></i>返回修改 ID
+            </button>
+        </div>
+        
+        <div id="step3">
+            <div class="success-animation">
+                <div class="success-icon">
+                    <i class="bi bi-check-lg"></i>
+                </div>
+                <h2 class="h3">验证成功</h2>
+                <p class="text-muted mb-3">您已成功登录 Nodeseek 账号</p>
+                <p id="redirect-message" class="fw-bold text-primary">即将跳转到授权页面...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let userId = '';
+    let verificationCode = '';
+
+    function updateStepIndicator(step) {
+        // 重置所有指示器
+        document.getElementById('step1-indicator').className = 'step';
+        document.getElementById('step2-indicator').className = 'step';
+        document.getElementById('step3-indicator').className = 'step';
+        
+        // 设置当前步骤和前面步骤的状态
+        if (step === 1) {
+            document.getElementById('step1-indicator').className = 'step active';
+        } else if (step === 2) {
+            document.getElementById('step1-indicator').className = 'step completed';
+            document.getElementById('step2-indicator').className = 'step active';
+        } else if (step === 3) {
+            document.getElementById('step1-indicator').className = 'step completed';
+            document.getElementById('step2-indicator').className = 'step completed';
+            document.getElementById('step3-indicator').className = 'step active';
+        }
+    }
+
+    function requestVerificationCode() {
+        userId = document.getElementById('user_id').value;
+        
+        if (!userId || isNaN(parseInt(userId))) {
+            alert('请输入有效的数字ID');
+            return;
+        }
+        
+        // 禁用按钮并显示加载状态
+        const btn = document.getElementById('getVerificationBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loader me-2"></span> 获取中...';
+        
+        // API 请求获取验证码
+        fetch('/oauth/verify', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ user_id: userId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // 恢复按钮状态
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-arrow-right-circle me-2"></i>获取验证码';
+            
+            if (data.success) {
+                verificationCode = data.verification_code;
+                document.getElementById('verification_code').innerText = verificationCode;
+                
+                // 更新步骤指示器
+                updateStepIndicator(2);
+                
+                // 切换到步骤2
+                document.getElementById('step1').style.display = 'none';
+                document.getElementById('step2').style.display = 'block';
+            } else {
+                alert('获取验证码失败: ' + data.message);
+            }
+        })
+        .catch(error => {
+            // 恢复按钮状态
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-arrow-right-circle me-2"></i>获取验证码';
+            
+            console.error('Error:', error);
+            alert('获取验证码时发生错误');
+        });
+    }
+    
+    function verifyMessage() {
+        // 禁用按钮并显示加载状态
+        const btn = document.getElementById('verifyBtn');
+        const btnText = document.getElementById('verifyBtnText');
+        const btnLoader = document.getElementById('verifyBtnLoader');
+        
+        btn.disabled = true;
+        btnText.innerText = '验证中...';
+        btnLoader.style.display = 'inline-block';
+        
+        // API 请求验证消息
+        fetch('/oauth/confirm', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                user_id: userId,
+                verification_code: verificationCode
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // 恢复按钮状态
+            btn.disabled = false;
+            btnText.innerText = '我已发送验证码';
+            btnLoader.style.display = 'none';
+            
+            if (data.success) {
+                // 更新步骤指示器
+                updateStepIndicator(3);
+                
+                // 切换到步骤3
+                document.getElementById('step2').style.display = 'none';
+                document.getElementById('step3').style.display = 'block';
+                
+                // 如果有重定向地址，则重定向
+                if (data.redirect_to) {
+                    document.getElementById('redirect-message').innerText = '正在重定向到授权页面...';
+                    setTimeout(() => {
+                        window.location.href = data.redirect_to;
+                    }, 1500);
+                } else {
+                    // 否则重定向到首页
+                    document.getElementById('redirect-message').innerText = '正在重定向到首页...';
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
+                }
+            } else {
+                alert('验证失败: ' + data.message);
+            }
+        })
+        .catch(error => {
+            // 恢复按钮状态
+            btn.disabled = false;
+            btnText.innerText = '我已发送验证码';
+            btnLoader.style.display = 'none';
+            
+            console.error('Error:', error);
+            alert('验证时发生错误');
+        });
+    }
+    
+    function backToStep1() {
+        // 更新步骤指示器
+        updateStepIndicator(1);
+        
+        document.getElementById('step2').style.display = 'none';
+        document.getElementById('step1').style.display = 'block';
+    }
+    
+    function copyVerificationCode() {
+        const code = document.getElementById('verification_code').innerText;
+        
+        // 创建一个临时文本区域
+        const textArea = document.createElement('textarea');
+        textArea.value = code;
+        document.body.appendChild(textArea);
+        textArea.select();
+        
+        try {
+            // 执行复制命令
+            document.execCommand('copy');
+            
+            // 显示复制成功提示
+            const successElement = document.getElementById('copySuccess');
+            successElement.classList.add('show');
+            
+            // 改变按钮文本
+            const copyBtn = document.getElementById('copyCodeBtn');
+            copyBtn.innerText = '已复制!';
+            
+            // 3秒后恢复
+            setTimeout(() => {
+                successElement.classList.remove('show');
+                copyBtn.innerText = '复制';
+            }, 3000);
+        } catch (err) {
+            console.error('复制失败:', err);
+            alert('复制失败，请手动复制验证码');
+        }
+        
+        // 移除临时文本区域
+        document.body.removeChild(textArea);
+    }
+</script>
+{% endblock %}

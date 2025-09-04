@@ -1,0 +1,599 @@
+{% extends "base.html" %}
+
+{% block title %}{{ client.client_name }} - Nodeseek OAuth2 授权服务{% endblock %}
+
+{% block head %}
+<style>
+    .client-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+    
+    .client-logo {
+        width: 64px;
+        height: 64px;
+        border-radius: 12px;
+        background-color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 20px;
+        color: white;
+        font-size: 2rem;
+        flex-shrink: 0;
+    }
+    
+    .client-info {
+        flex: 1;
+    }
+    
+    .client-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+    
+    .client-website {
+        display: flex;
+        align-items: center;
+        color: var(--muted-color);
+    }
+    
+    .details-card {
+        margin-bottom: 24px;
+    }
+    
+    .details-title {
+        font-weight: 600;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .details-title i {
+        color: var(--primary-color);
+        margin-right: 8px;
+    }
+    
+    .credential-item {
+        margin-bottom: 16px;
+    }
+    
+    .credential-item .form-label {
+        font-weight: 500;
+    }
+    
+    .meta-info {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    
+    .meta-info i {
+        color: var(--muted-color);
+        margin-right: 8px;
+    }
+    
+    .danger-zone {
+        background-color: #fff5f5;
+        border: 1px solid #fed7d7;
+        padding: 16px;
+        border-radius: 8px;
+    }
+    
+    .danger-title {
+        color: #e53e3e;
+        font-weight: 600;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .danger-title i {
+        margin-right: 8px;
+    }
+    
+    .code-block {
+        background-color: #2d3748;
+        color: #f7fafc;
+        padding: 16px;
+        border-radius: 6px;
+        margin: 16px 0;
+        font-family: 'Courier New', monospace;
+        position: relative;
+    }
+    
+    .code-block pre {
+        margin: 0;
+        white-space: pre-wrap;
+        overflow-x: auto;
+    }
+    
+    .code-copy-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        border-radius: 4px;
+        color: white;
+        padding: 4px 8px;
+        cursor: pointer;
+        font-size: 0.8rem;
+    }
+    
+    .code-copy-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .edit-button {
+        margin-left: auto;
+    }
+    
+    .section-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+    
+    .section-title {
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+    
+    .section-title i {
+        color: var(--primary-color);
+        margin-right: 8px;
+    }
+    
+    #editForm {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="mb-4">
+        <a href="/clients" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>返回应用列表
+        </a>
+    </div>
+    
+    <div class="client-header">
+        <div class="client-logo">
+            <i class="bi bi-grid"></i>
+        </div>
+        <div class="client-info">
+            <div class="client-name">{{ client.client_name }}</div>
+            <div class="client-website">
+                <i class="bi bi-link-45deg me-1"></i>
+                <a href="{{ client.website }}" target="_blank">{{ client.website }}</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card details-card">
+                <div class="card-body">
+                    <div class="details-title">
+                        <i class="bi bi-key"></i>客户端凭据
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        请妥善保管您的客户端密钥，不要泄露给他人！
+                    </div>
+                    
+                    <div class="credential-item">
+                        <label class="form-label">客户端ID</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="{{ client.client_id }}" id="clientId" readonly>
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyText('clientId')">
+                                复制
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="credential-item">
+                        <label class="form-label">客户端密钥</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="{{ client_secret }}" id="clientSecret" readonly>
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyText('clientSecret')">
+                                复制
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card details-card">
+                <div class="card-body">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <i class="bi bi-info-circle"></i>应用信息
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary edit-button" id="editToggleBtn" onclick="toggleEditForm()">
+                            <i class="bi bi-pencil me-1"></i>编辑
+                        </button>
+                    </div>
+                    
+                    <!-- 显示视图 -->
+                    <div id="infoDisplay">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">名称</label>
+                            <p>{{ client.client_name }}</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">网站地址</label>
+                            <p><a href="{{ client.website }}" target="_blank">{{ client.website }}</a></p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">应用描述</label>
+                            <p>{{ client.description }}</p>
+                        </div>
+                        
+                        <div class="mb-0">
+                            <label class="form-label fw-bold">创建时间</label>
+                            <p>{{ client.created_at[:10] }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 编辑表单 -->
+                    <form id="editForm">
+                        <div class="mb-3">
+                            <label for="editName" class="form-label">名称</label>
+                            <input type="text" class="form-control" id="editName" value="{{ client.client_name }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editWebsite" class="form-label">网站地址</label>
+                            <input type="url" class="form-control" id="editWebsite" value="{{ client.website }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editDescription" class="form-label">应用描述</label>
+                            <textarea class="form-control" id="editDescription" rows="3" required>{{ client.description }}</textarea>
+                        </div>
+                        
+                        <div class="d-flex">
+                            <button type="button" class="btn btn-secondary me-2" onclick="toggleEditForm()">取消</button>
+                            <button type="submit" class="btn btn-primary" id="saveBtn">保存修改</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card details-card">
+                <div class="card-body">
+                    <div class="details-title">
+                        <i class="bi bi-link"></i>授权配置
+                    </div>
+                    
+                    <div class="credential-item">
+                        <label class="form-label">重定向URI</label>
+                        <div class="input-group">
+                            <textarea class="form-control" rows="2" id="redirectUris" readonly>{{ client.redirect_uris }}</textarea>
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyText('redirectUris')">
+                                复制
+                            </button>
+                        </div>
+                        <div class="form-text">用户授权后的重定向地址</div>
+                    </div>
+                    
+                    <div class="credential-item mb-0">
+                        <label class="form-label">授权请求URL</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="{{ request.url.scheme }}://{{ request.url.netloc }}/oauth/authorize" id="authorizeUrl" readonly>
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyText('authorizeUrl')">
+                                复制
+                            </button>
+                        </div>
+                        <div class="form-text">使用此URL引导用户进行授权</div>
+                    </div>
+                    
+                    <div class="credential-item mb-0">
+                        <label class="form-label">Token获取URL</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="{{ request.url.scheme }}://{{ request.url.netloc }}/oauth/token" id="gettokenUrl" readonly>
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyText('gettokenUrl')">
+                                复制
+                            </button>
+                        </div>
+                        <div class="form-text">使用此URL获取Token信息</div>
+                    </div>
+                    
+                    <div class="credential-item mb-0">
+                        <label class="form-label">用户信息获取URL</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="{{ request.url.scheme }}://{{ request.url.netloc }}/api/user/info" id="getuserinfoUrl" readonly>
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyText('getuserinfoUrl')">
+                                复制
+                            </button>
+                        </div>
+                        <div class="form-text">使用此URL获取用户信息</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- <div class="card details-card"> -->
+                <!-- <div class="card-body"> -->
+                    <!-- <div class="details-title"> -->
+                        <!-- <i class="bi bi-code-square"></i>集成示例 -->
+                    <!-- </div> -->
+                    <!--  -->
+                    <!-- <p>下面是一个简单的授权流程示例代码：</p> -->
+                    <!--  -->
+                    <!-- <div class="code-block"> -->
+                        <!-- <button class="code-copy-btn" onclick="copyCodeExample()">复制</button> -->
+                        <!-- <pre id="codeExample">// 1. 构建授权URL -->
+<!-- const authorizeUrl = "{{ request.url.scheme }}://{{ request.url.netloc }}/oauth/authorize"; -->
+<!-- const clientId = "{{ client.client_id }}"; -->
+<!-- const redirectUri = "您的回调URL"; // 从redirect_uris中选择一个 -->
+<!-- const responseType = "code"; -->
+<!-- const scope = "basic"; // 或 "profile" 获取更多信息 -->
+<!-- const state = "随机字符串"; // 用于防止CSRF攻击 -->
+<!--  -->
+<!-- // 2. 引导用户访问授权页面 -->
+<!-- const authUrl = `${authorizeUrl}?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=${responseType}&scope=${scope}&state=${state}`; -->
+<!-- window.location.href = authUrl; -->
+<!--  -->
+<!-- // 3. 授权成功后，用授权码换取访问令牌 -->
+<!-- // 在您的回调地址中获取授权码 -->
+<!-- const code = new URL(window.location.href).searchParams.get("code"); -->
+<!--  -->
+<!-- // 服务器端请求访问令牌 -->
+<!-- fetch("{{ request.url.scheme }}://{{ request.url.netloc }}/oauth/token", { -->
+  <!-- method: "POST", -->
+  <!-- headers: { "Content-Type": "application/json" }, -->
+  <!-- body: JSON.stringify({ -->
+    <!-- grant_type: "authorization_code", -->
+    <!-- code: code, -->
+    <!-- redirect_uri: redirectUri, -->
+    <!-- client_id: clientId, -->
+    <!-- client_secret: "您的客户端密钥" -->
+  <!-- }) -->
+<!-- }) -->
+<!-- .then(response => response.json()) -->
+<!-- .then(data => { -->
+  <!-- // 使用访问令牌请求用户信息 -->
+  <!-- fetch("{{ request.url.scheme }}://{{ request.url.netloc }}/api/user/info", { -->
+    <!-- headers: { "Authorization": `Bearer ${data.access_token}` } -->
+  <!-- }) -->
+  <!-- .then(response => response.json()) -->
+  <!-- .then(userInfo => { -->
+    <!-- console.log("用户信息:", userInfo); -->
+  <!-- }); -->
+<!-- });</pre> -->
+                    <!-- </div> -->
+                <!-- </div> -->
+            <!-- </div> -->
+        <!-- </div> -->
+        
+        <div class="col-lg-4">
+            <div class="card details-card">
+                <div class="card-body">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <i class="bi bi-sliders"></i>重定向URI管理
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editRedirectUris" class="form-label">编辑重定向URI</label>
+                        <textarea class="form-control" id="editRedirectUris" rows="5">{{ client.redirect_uris }}</textarea>
+                        <div class="form-text">多个URI请用英文逗号分隔</div>
+                    </div>
+                    
+                    <button class="btn btn-outline-primary w-100" id="saveRedirectBtn" onclick="updateRedirectURIs()">
+                        <i class="bi bi-save me-2"></i>保存重定向URI
+                    </button>
+                </div>
+            </div>
+            
+            <div class="danger-zone">
+                <div class="danger-title">
+                    <i class="bi bi-exclamation-circle"></i>危险区域
+                </div>
+                <p>删除应用将会撤销所有已授权的用户访问权限，此操作不可恢复。</p>
+                <button class="btn btn-danger" onclick="confirmDelete()">
+                    <i class="bi bi-trash me-2"></i>删除此应用
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">确认删除</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    此操作不可恢复！
+                </div>
+                <p>您确定要删除应用 <strong>{{ client.client_name }}</strong> 吗？删除后将撤销所有用户授权。</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn" onclick="deleteClient()">
+                    确认删除
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function copyText(elementId) {
+        const element = document.getElementById(elementId);
+        element.select();
+        document.execCommand('copy');
+        
+        // 显示复制成功的提示
+        const button = element.nextElementSibling;
+        const originalText = button.innerText;
+        button.innerText = '已复制!';
+        setTimeout(() => {
+            button.innerText = originalText;
+        }, 2000);
+    }
+    
+    function copyCodeExample() {
+        const element = document.getElementById('codeExample');
+        const range = document.createRange();
+        range.selectNode(element);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+        document.execCommand('copy');
+        window.getSelection().removeAllRanges();
+        
+        // 显示复制成功的提示
+        const button = document.querySelector('.code-copy-btn');
+        button.textContent = '已复制!';
+        setTimeout(() => {
+            button.textContent = '复制';
+        }, 2000);
+    }
+    
+    function toggleEditForm() {
+        const displayView = document.getElementById('infoDisplay');
+        const editForm = document.getElementById('editForm');
+        const toggleBtn = document.getElementById('editToggleBtn');
+        
+        if (editForm.style.display === 'none' || editForm.style.display === '') {
+            displayView.style.display = 'none';
+            editForm.style.display = 'block';
+            toggleBtn.innerHTML = '<i class="bi bi-x-lg me-1"></i>取消';
+        } else {
+            displayView.style.display = 'block';
+            editForm.style.display = 'none';
+            toggleBtn.innerHTML = '<i class="bi bi-pencil me-1"></i>编辑';
+        }
+    }
+    
+    document.getElementById('editForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // 获取表单数据
+        const clientData = {
+            client_id: "{{ client.client_id }}",
+            name: document.getElementById('editName').value,
+            website: document.getElementById('editWebsite').value,
+            description: document.getElementById('editDescription').value
+        };
+        
+        // 禁用按钮
+        const button = document.getElementById('saveBtn');
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> 保存中...';
+        
+        // 发送请求
+        fetch('/api/clients/{{ client.client_id }}', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(clientData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // 刷新页面以显示更新
+                location.reload();
+            } else {
+                alert('保存失败: ' + data.message);
+                button.disabled = false;
+                button.innerHTML = '保存修改';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('保存过程中发生错误');
+            button.disabled = false;
+            button.innerHTML = '保存修改';
+        });
+    });
+    
+    function updateRedirectURIs() {
+        // 获取新的重定向URI
+        const redirectURIs = document.getElementById('editRedirectUris').value;
+        
+        // 禁用按钮
+        const button = document.getElementById('saveRedirectBtn');
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> 保存中...';
+        
+        // 发送请求
+        fetch('/api/clients/{{ client.client_id }}/redirect', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ redirect_uris: redirectURIs })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // 刷新页面以显示更新
+                location.reload();
+            } else {
+                alert('保存失败: ' + data.message);
+                button.disabled = false;
+                button.innerHTML = '<i class="bi bi-save me-2"></i>保存重定向URI';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('保存过程中发生错误');
+            button.disabled = false;
+            button.innerHTML = '<i class="bi bi-save me-2"></i>保存重定向URI';
+        });
+    }
+    
+    function confirmDelete() {
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        modal.show();
+    }
+    
+    function deleteClient() {
+        // 禁用按钮
+        const button = document.getElementById('confirmDeleteBtn');
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> 删除中...';
+        
+        // 发送删除请求
+        fetch('/api/clients/{{ client.client_id }}', {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = '/clients';
+            } else {
+                alert('删除失败: ' + data.message);
+                button.disabled = false;
+                button.innerHTML = '确认删除';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('删除过程中发生错误');
+            button.disabled = false;
+            button.innerHTML = '确认删除';
+        });
+    }
+</script>
+{% endblock %}

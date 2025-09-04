@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}创建应用 - Nodeseek OAuth2 授权服务{% endblock %}
+
+{% block head %}
+<style>
+    .restriction-container {
+        max-width: 600px;
+        margin: 60px auto;
+        text-align: center;
+    }
+    
+    .restriction-icon {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background-color: #feebc8;
+        color: #dd6b20;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        margin: 0 auto 32px;
+    }
+    
+    .restriction-title {
+        font-weight: 700;
+        margin-bottom: 16px;
+    }
+    
+    .restriction-message {
+        color: var(--muted-color);
+        margin-bottom: 32px;
+    }
+    
+    .rank-display {
+        display: inline-flex;
+        align-items: center;
+        background-color: #f0f4ff;
+        padding: 12px 24px;
+        border-radius: 50px;
+        margin-bottom: 24px;
+    }
+    
+    .current-rank {
+        margin-right: 16px;
+        padding: 8px 16px;
+        background-color: #fff;
+        border-radius: 50px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        font-weight: 600;
+    }
+    
+    .required-rank {
+        padding: 8px 16px;
+        background-color: var(--primary-color);
+        color: white;
+        border-radius: 50px;
+        font-weight: 600;
+    }
+    
+    .arrow-icon {
+        margin: 0 10px;
+        color: var(--muted-color);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="restriction-container">
+    <div class="restriction-icon">
+        <i class="bi bi-lock"></i>
+    </div>
+    
+    <h1 class="restriction-title">需要更高等级</h1>
+    <p class="restriction-message">创建OAuth应用需要等级 {{ min_rank }} 或更高，请提升您的Nodeseek等级后再尝试。</p>
+    
+    <div class="rank-display">
+        <div class="current-rank">
+            当前等级: {{ user.rank }}
+        </div>
+        <div class="arrow-icon">
+            <i class="bi bi-arrow-right"></i>
+        </div>
+        <div class="required-rank">
+            需要等级: {{ min_rank }}
+        </div>
+    </div>
+    
+    <a href="/" class="btn btn-primary">
+        <i class="bi bi-house me-2"></i>返回首页
+    </a>
+</div>
+{% endblock %}

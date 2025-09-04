@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}授权请求 - Nodeseek OAuth2 授权服务{% endblock %}
+
+{% block head %}
+<style>
+    .authorize-card {
+        max-width: 550px;
+        margin: 40px auto;
+    }
+    
+    .app-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 32px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .app-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        background-color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        font-size: 1.8rem;
+        color: white;
+        flex-shrink: 0;
+    }
+    
+    .app-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+    
+    .app-subtitle {
+        color: var(--muted-color);
+        font-size: 0.95rem;
+    }
+    
+    .user-info-section {
+        display: flex;
+        align-items: center;
+        padding: 14px 16px;
+        background-color: #f8fafc;
+        border-radius: 12px;
+        margin-bottom: 24px;
+    }
+    
+    .user-info-section .user-avatar {
+        width: 44px;
+        height: 44px;
+        font-size: 1.2rem;
+        margin-right: 14px;
+    }
+    
+    .user-name {
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .scope-section {
+        margin-bottom: 32px;
+    }
+    
+    .scope-title {
+        font-weight: 600;
+        margin-bottom: 16px;
+        color: var(--text-color);
+        font-size: 1.1rem;
+    }
+    
+    .scope-item {
+        background-color: #f8fafc;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: flex-start;
+        transition: all 0.2s;
+    }
+    
+    .scope-item:hover {
+        background-color: #f0f4ff;
+    }
+    
+    .scope-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #f0f4ff;
+        color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        margin-right: 16px;
+    }
+    
+    .scope-content {
+        flex: 1;
+    }
+    
+    .scope-name {
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+    
+    .scope-description {
+        color: var(--muted-color);
+        font-size: 0.9rem;
+    }
+    
+    .auth-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .auth-actions .btn {
+        flex: 1;
+    }
+    
+    .auth-note {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 0.9rem;
+        color: var(--muted-color);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="authorize-card card p-4 fade-in">
+    <div class="app-header">
+        <div class="app-icon">
+            <i class="bi bi-grid"></i>
+        </div>
+        <div>
+            <div class="app-name">{{ client.client_name }}</div>
+            <div class="app-subtitle">请求访问您的 Nodeseek 账号</div>
+        </div>
+    </div>
+    
+    <div class="user-info-section">
+        <div class="user-avatar">{{ user.name[:1] }}</div>
+        <div>
+            <div class="text-muted small">授权身份</div>
+            <div class="user-name">{{ user.name }} <span class="level-badge ms-2">等级 {{ user.rank }}</span></div>
+        </div>
+    </div>
+    
+    <div class="scope-section">
+        <div class="scope-title">
+            <i class="bi bi-shield-lock me-2"></i>
+            应用将获得以下权限:
+        </div>
+        
+        <div class="scope-item">
+            <div class="scope-icon">
+                <i class="bi bi-person-badge"></i>
+            </div>
+            <div class="scope-content">
+                <div class="scope-name">基本信息</div>
+                <div class="scope-description">包括您的用户ID、用户名和等级信息</div>
+            </div>
+        </div>
+        
+        {% if scope == 'profile' %}
+        <div class="scope-item">
+            <div class="scope-icon">
+                <i class="bi bi-person-lines-fill"></i>
+            </div>
+            <div class="scope-content">
+                <div class="scope-name">个人资料</div>
+                <div class="scope-description">包括您的个人简介、账号积分等详细信息</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <form id="authorizeForm">
+        <input type="hidden" name="client_id" value="{{ client_id }}">
+        <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
+        <input type="hidden" name="response_type" value="{{ response_type }}">
+        <input type="hidden" name="scope" value="{{ scope }}">
+        <input type="hidden" name="state" value="{{ state }}">
+        
+        <div class="auth-actions">
+            <button type="button" class="btn btn-outline-secondary" onclick="denyAuthorization()">
+                <i class="bi bi-x-lg me-2"></i>拒绝
+            </button>
+            <button type="button" class="btn btn-primary" id="approveBtn" onclick="approveAuthorization()">
+                <i class="bi bi-check-lg me-2"></i>授权应用
+            </button>
+        </div>
+    </form>
+    
+    <div class="auth-note">
+        <i class="bi bi-info-circle me-1"></i>
+        您可以随时在账号设置中撤销此应用的访问权限
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function getFormData() {
+        const form = document.getElementById('authorizeForm');
+        const formData = new FormData(form);
+        return formData;
+    }
+    
+    function approveAuthorization() {
+        // 禁用按钮并显示加载状态
+        const btn = document.getElementById('approveBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> 授权中...';
+        
+        fetch('/oauth/approve', {
+            method: 'POST',
+            body: getFormData()
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.redirect_uri) {
+                window.location.href = data.redirect_uri;
+            } else {
+                alert('授权失败');
+                // 恢复按钮状态
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-lg me-2"></i>授权应用';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('授权过程中发生错误');
+            // 恢复按钮状态
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg me-2"></i>授权应用';
+        });
+    }
+    
+    function denyAuthorization() {
+        fetch('/oauth/deny', {
+            method: 'POST',
+            body: getFormData()
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.redirect_uri) {
+                window.location.href = data.redirect_uri;
+            } else {
+                alert('操作失败');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('操作过程中发生错误');
+        });
+    }
+</script>
+{% endblock %}

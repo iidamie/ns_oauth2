@@ -35,7 +35,7 @@ COOKIE = os.environ.get('COOKIE')
 ADMIN_ID = os.environ.get('ADMIN_ID')
 JWT_SECRET = os.environ.get('JWT_SECRET')
 JWT_ALGORITHM = "HS256"
-MIN_CLIENT_CREATION_RANK = os.environ.get('MIN_CLIENT_CREATION_RANK', 1)  # 创建客户端的最低等级要求
+MIN_CLIENT_CREATION_RANK = os.environ.get('MIN_CLIENT_CREATION_RANK', 1)
 
 # 模型定义
 class VerifyRequest(BaseModel):

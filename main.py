@@ -6,7 +6,7 @@ from fastapi.templating import Jinja2Templates
 from typing import Optional, Dict, Any, List
 import secrets
 import json
-from curl_cffi import requests  # 使用指定的请求库
+from curl_cffi import requests
 import sqlite3
 from datetime import datetime, timedelta
 import uvicorn

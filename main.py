@@ -15,6 +15,14 @@ import jwt
 from starlette.middleware.sessions import SessionMiddleware
 import os
 
+# 配置
+DB_PATH = os.environ.get('DB_PATH', 'oauth_db.sqlite')
+COOKIE = os.environ.get('COOKIE')
+ADMIN_ID = os.environ.get('ADMIN_ID')
+JWT_SECRET = os.environ.get('JWT_SECRET')
+JWT_ALGORITHM = "HS256"
+MIN_CLIENT_CREATION_RANK = os.environ.get('MIN_CLIENT_CREATION_RANK', 1)
+
 # 创建应用实例
 app = FastAPI(title="Nodeseek OAuth2 授权服务")
 
@@ -28,14 +36,6 @@ app.add_middleware(
 # 配置模板和静态文件
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# 配置
-DB_PATH = os.environ.get('DB_PATH', 'oauth_db.sqlite')
-COOKIE = os.environ.get('COOKIE')
-ADMIN_ID = os.environ.get('ADMIN_ID')
-JWT_SECRET = os.environ.get('JWT_SECRET')
-JWT_ALGORITHM = "HS256"
-MIN_CLIENT_CREATION_RANK = os.environ.get('MIN_CLIENT_CREATION_RANK', 1)
 
 # 模型定义
 class VerifyRequest(BaseModel):

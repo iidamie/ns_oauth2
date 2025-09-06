@@ -213,6 +213,84 @@
         .nav-link i {
             margin-right: 6px;
         }
+        
+        /* 系统配置页面专用样式 */
+        .setup-container {
+            max-width: 600px;
+            margin: 40px auto;
+        }
+        
+        .setup-card {
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        
+        .setup-header {
+            text-align: center;
+            padding: 40px 20px 20px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 12px 12px 0 0;
+        }
+        
+        .setup-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+        
+        .form-section {
+            padding: 30px;
+        }
+        
+        .form-section-title {
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+        
+        .form-section-title i {
+            margin-right: 8px;
+            color: var(--primary-color);
+        }
+        
+        .helper-text {
+            font-size: 0.875rem;
+            color: var(--muted-color);
+            margin-top: 4px;
+        }
+        
+        .admin-users-section {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: var(--light-bg);
+            border-radius: 8px;
+        }
+        
+        .admin-user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        
+        .admin-user-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .admin-user-info {
+            flex: 1;
+        }
+        
+        .add-admin-form {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
     </style>
     {% block head %}{% endblock %}
 </head>

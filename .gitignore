@@ -208,3 +208,5 @@ __marimo__/
 
 *.bak
 config.json
+oauth_db.sqlite
+oauth_system.log

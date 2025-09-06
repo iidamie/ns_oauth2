@@ -59,10 +59,6 @@ NodeSeek OAuth2 授权服务是一个基于 FastAPI 开发的标准 OAuth2 授�
 项目使用环境变量进行配置：
 
 * `DB_PATH` - SQLite 数据库路径
-* `COOKIE` - NodeSeek 网站的有效会话 Cookie
-* `ADMIN_ID` - 接收验证码消息的 NodeSeek 账号 ID
-* `MIN_CLIENT_CREATION_RANK` - 创建客户端应用所需的最低用户等级 (默认为 1)
-* `JWT_SECRET` - JWT 令牌加密密钥
 
 ## Docker 部署
 
@@ -73,10 +69,6 @@ NodeSeek OAuth2 授权服务是一个基于 FastAPI 开发的标准 OAuth2 授�
 ```shell
 docker run -d -p 5001:5001 \
   -e DB_PATH="/app/data/oauth_db.sqlite" \
-  -e COOKIE="session=xxxxxxxxxx; smac=xxxxxxxxxx" \
-  -e ADMIN_ID="xxxx" \
-  -e MIN_CLIENT_CREATION_RANK=1 \
-  -e JWT_SECRET="your-secure-jwt-secret" \
   --name ns_oauth2 ghcr.io/iidamie/ns_oauth2:latest
 ```
 
@@ -86,12 +78,10 @@ docker run -d -p 5001:5001 \
 docker run -d -p 8000:8000 \
   -v /path/to/data:/app/data \
   -e DB_PATH="/app/data/oauth_db.sqlite" \
-  -e COOKIE="session=xxxxxxxxxx; smac=xxxxxxxxxx" \
-  -e ADMIN_ID="xxxx" \
-  -e MIN_CLIENT_CREATION_RANK=1 \
-  -e JWT_SECRET="your-secure-jwt-secret" \
   --name ns_oauth2 ghcr.io/iidamie/ns_oauth2:latest
 ```
+
+部署成功后访问网站即可开始进行初始化
 
 查看服务实时日志:
 
@@ -128,10 +118,6 @@ services:
       - "5001:5001"
     environment:
       - DB_PATH=/app/data/oauth_db.sqlite
-      - COOKIE=session=xxxxxxxxxx; smac=xxxxxxxxxx
-      - ADMIN_ID=xxxx
-      - MIN_CLIENT_CREATION_RANK=1
-      - JWT_SECRET=your-secure-jwt-secret
 ```
 
 持久化部署
@@ -149,10 +135,6 @@ services:
       - ./data:/app/data
     environment:
       - DB_PATH=/app/data/oauth_db.sqlite
-      - COOKIE=session=xxxxxxxxxx; smac=xxxxxxxxxx
-      - ADMIN_ID=xxxx
-      - MIN_CLIENT_CREATION_RANK=1
-      - JWT_SECRET=your-secure-jwt-secret
 ```
 
 启动服务:
@@ -160,6 +142,8 @@ services:
 ```shell
 docker-compose up -d
 ```
+
+部署成功后访问网站即可开始进行初始化
 
 ## 原生部署
 
@@ -177,10 +161,6 @@ pip install -r requirements.txt
 
 ```shell
 export DB_PATH="./data/oauth_db.sqlite"
-export COOKIE="session=xxxxxxxxxx; smac=xxxxxxxxxx"
-export ADMIN_ID="xxxx"
-export MIN_CLIENT_CREATION_RANK=1
-export JWT_SECRET="your-secure-jwt-secret"
 ```
 
 启动服务:
@@ -194,6 +174,8 @@ uvicorn main:app --host 0.0.0.0 --port 5001
 ```shell
 nohup uvicorn main:app --host 0.0.0.0 --port 5001 > uvicorn.log 2>&1 &
 ```
+
+部署成功后访问网站即可开始进行初始化
 
 ## 接口列表
 

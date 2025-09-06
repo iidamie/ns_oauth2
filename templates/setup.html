@@ -1,0 +1,442 @@
+{% extends "base.html" %}
+{% block title %}系统配置 - Nodeseek OAuth2 授权服务{% endblock %}
+{% block head %}
+<style>
+    .setup-container {
+        max-width: 600px;
+        margin: 40px auto;
+    }
+    .setup-card {
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .setup-header {
+        text-align: center;
+        padding: 40px 20px 20px;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        border-radius: 12px 12px 0 0;
+    }
+    .setup-icon {
+        font-size: 3rem;
+        margin-bottom: 16px;
+    }
+    .form-section {
+        padding: 30px;
+    }
+    .form-section-title {
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: var(--text-color);
+    }
+    .form-section-title i {
+        margin-right: 8px;
+        color: var(--primary-color);
+    }
+    .helper-text {
+        font-size: 0.875rem;
+        color: var(--muted-color);
+        margin-top: 4px;
+    }
+    .admin-users-section {
+        margin-top: 20px;
+        padding: 20px;
+        background-color: var(--light-bg);
+        border-radius: 8px;
+    }
+    .admin-user-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        background: white;
+        border-radius: 6px;
+        margin-bottom: 8px;
+    }
+    .admin-user-item:last-child {
+        margin-bottom: 0;
+    }
+    .admin-user-info {
+        flex: 1;
+    }
+    .add-admin-form {
+        display: flex;
+        gap: 8px;
+        margin-top: 16px;
+    }
+    .initial-admin-section {
+        margin-top: 20px;
+        padding: 20px;
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+    }
+    .admin-tag {
+        display: inline-block;
+        background-color: var(--primary-color);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin-left: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="setup-container">
+    <div class="setup-card card">
+        <div class="setup-header">
+            <div class="setup-icon">
+                <i class="bi bi-gear"></i>
+            </div>
+            <h1 class="h2 mb-2">
+                {% if is_initialized %}
+                系统配置管理
+                {% else %}
+                系统初始化配置
+                {% endif %}
+            </h1>
+            <p class="mb-0">
+                {% if is_initialized %}
+                管理系统配置和管理员用户
+                {% else %}
+                请完成初始配置以开始使用系统
+                {% endif %}
+            </p>
+        </div>
+        
+        <form id="setupForm" class="form-section">
+            {% if not is_initialized %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                这是系统首次运行，请完成以下配置
+            </div>
+            {% endif %}
+            
+            <div class="form-section-title">
+                <i class="bi bi-cookie"></i>基础配置
+            </div>
+            
+            <div class="mb-3">
+                <label for="cookie" class="form-label">Nodeseek Cookie <span class="text-danger">*</span></label>
+                <textarea class="form-control" id="cookie" rows="3" required 
+                    {% if is_initialized %}value="{{ config.cookie }}"{% endif %}></textarea>
+                <div class="helper-text">
+                    用于访问 Nodeseek API 的 Cookie，请确保具有读取私信的权限
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="adminId" class="form-label">接收方用户 ID <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="adminId" required 
+                            {% if is_initialized %}value="{{ config.admin_id }}"{% endif %}>
+                        <div class="helper-text">接收验证码的用户数字 ID</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="adminName" class="form-label">接收方用户名 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="adminName" required 
+                            {% if is_initialized %}value="{{ config.admin_name }}"{% endif %}>
+                        <div class="helper-text">接收验证码的用户名</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="minRank" class="form-label">创建应用最低等级</label>
+                <input type="number" class="form-control" id="minRank" min="1" 
+                    {% if is_initialized %}value="{{ config.min_client_creation_rank }}"{% else %}value="1"{% endif %}>
+                <div class="helper-text">用户创建 OAuth 应用所需的最低等级</div>
+            </div>
+            
+            <!-- 系统管理员配置 -->
+            <div class="form-section-title mt-4">
+                <i class="bi bi-people"></i>系统管理员配置
+            </div>
+            
+            {% if not is_initialized %}
+            <!-- 初始化时的管理员配置 -->
+            <div class="initial-admin-section">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="bi bi-info-circle-fill text-warning me-2"></i>
+                    <strong>设置初始管理员</strong>
+                </div>
+                <p class="mb-3">请添加至少一个系统管理员用户 ID。管理员可以访问系统配置页面和管理其他管理员。</p>
+                
+                <div id="initialAdminsList">
+                    <!-- 初始管理员列表将在这里显示 -->
+                </div>
+                
+                <div class="add-admin-form">
+                    <input type="text" class="form-control" id="newInitialAdminId" placeholder="管理员用户 ID（数字）">
+                    <button type="button" class="btn btn-outline-primary" onclick="addInitialAdmin()">
+                        <i class="bi bi-plus"></i> 添加管理员
+                    </button>
+                </div>
+                <div class="helper-text mt-2">
+                    建议添加接收验证码的用户作为管理员，这样可以确保系统的正常管理
+                </div>
+            </div>
+            {% else %}
+            <!-- 已初始化时的管理员管理 -->
+            <div class="admin-users-section">
+                <div class="mb-3">
+                    <strong>当前系统管理员</strong>
+                </div>
+                
+                <div id="adminUsersList">
+                    {% for admin_id in config.admin_users %}
+                    <div class="admin-user-item" data-user-id="{{ admin_id }}">
+                        <div class="admin-user-info">
+                            <strong>用户 ID: {{ admin_id }}</strong>
+                            <span class="admin-tag">管理员</span>
+                        </div>
+                        {% if config.admin_users|length > 1 %}
+                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                onclick="removeAdmin({{ admin_id }})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                        {% else %}
+                        <span class="text-muted small">最后一个管理员</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="add-admin-form">
+                    <input type="text" class="form-control" id="newAdminId" placeholder="新管理员用户 ID">
+                    <button type="button" class="btn btn-outline-primary" onclick="addAdmin()">
+                        <i class="bi bi-plus"></i> 添加
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="d-flex justify-content-end mt-4">
+                <button type="submit" class="btn btn-primary btn-lg" id="saveBtn">
+                    <i class="bi bi-check-lg me-2"></i>
+                    {% if is_initialized %}保存配置{% else %}完成初始化{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 初始化时的临时管理员列表
+let initialAdmins = [];
+
+document.getElementById('setupForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    {% if not is_initialized %}
+    // 初始化时检查是否至少有一个管理员
+    if (initialAdmins.length === 0) {
+        alert('请至少添加一个系统管理员');
+        return;
+    }
+    {% endif %}
+    
+    const saveBtn = document.getElementById('saveBtn');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<span class="loader me-2"></span>保存中...';
+    saveBtn.disabled = true;
+    
+    try {
+        const formData = {
+            cookie: document.getElementById('cookie').value,
+            admin_id: document.getElementById('adminId').value,
+            admin_name: document.getElementById('adminName').value,
+            min_client_creation_rank: parseInt(document.getElementById('minRank').value),
+            admin_users: {% if is_initialized %}{{ config.admin_users | tojson }}{% else %}initialAdmins{% endif %}
+        };
+        
+        const response = await fetch('/api/setup', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // 显示成功消息
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success';
+            alert.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>' + result.message;
+            document.querySelector('.form-section').insertBefore(alert, document.querySelector('.form-section').firstChild);
+            
+            // 如果是初始化，2秒后跳转到首页
+            {% if not is_initialized %}
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 2000);
+            {% endif %}
+        } else {
+            throw new Error(result.message || '保存失败');
+        }
+    } catch (error) {
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-danger';
+        alert.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i>' + error.message;
+        document.querySelector('.form-section').insertBefore(alert, document.querySelector('.form-section').firstChild);
+    } finally {
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    }
+});
+
+{% if not is_initialized %}
+// 初始化时添加管理员
+function addInitialAdmin() {
+    const newAdminId = document.getElementById('newInitialAdminId').value.trim();
+    if (!newAdminId || !newAdminId.match(/^\d+$/)) {
+        alert('请输入有效的用户ID（数字）');
+        return;
+    }
+    
+    const adminIdInt = parseInt(newAdminId);
+    if (initialAdmins.includes(adminIdInt)) {
+        alert('该用户已经是管理员');
+        return;
+    }
+    
+    initialAdmins.push(adminIdInt);
+    document.getElementById('newInitialAdminId').value = '';
+    updateInitialAdminsList();
+}
+
+function removeInitialAdmin(adminId) {
+    const index = initialAdmins.indexOf(adminId);
+    if (index > -1) {
+        initialAdmins.splice(index, 1);
+        updateInitialAdminsList();
+    }
+}
+
+function updateInitialAdminsList() {
+    const container = document.getElementById('initialAdminsList');
+    if (initialAdmins.length === 0) {
+        container.innerHTML = '<div class="text-muted text-center py-3">暂无管理员，请添加至少一个</div>';
+        return;
+    }
+    
+    container.innerHTML = initialAdmins.map(adminId => `
+        <div class="admin-user-item" data-user-id="${adminId}">
+            <div class="admin-user-info">
+                <strong>用户 ID: ${adminId}</strong>
+                <span class="admin-tag">管理员</span>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeInitialAdmin(${adminId})">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+// 初始化显示
+updateInitialAdminsList();
+
+// 回车键添加管理员
+document.getElementById('newInitialAdminId').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        addInitialAdmin();
+    }
+});
+
+// 自动填充建议：当接收方用户ID填写后，建议添加为管理员
+document.getElementById('adminId').addEventListener('blur', function() {
+    const adminId = this.value.trim();
+    if (adminId && adminId.match(/^\d+$/)) {
+        const adminIdInt = parseInt(adminId);
+        if (!initialAdmins.includes(adminIdInt)) {
+            if (confirm(`是否将接收方用户 ID (${adminId}) 添加为系统管理员？`)) {
+                initialAdmins.push(adminIdInt);
+                updateInitialAdminsList();
+            }
+        }
+    }
+});
+
+{% else %}
+// 已初始化时的管理员管理
+async function addAdmin() {
+    const newAdminId = document.getElementById('newAdminId').value;
+    if (!newAdminId || !newAdminId.match(/^\d+$/)) {
+        alert('请输入有效的用户ID（数字）');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/admin/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                user_id: parseInt(newAdminId),
+                action: 'add'
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            location.reload();
+        } else {
+            alert(result.message || '添加失败');
+        }
+    } catch (error) {
+        alert('操作失败: ' + error.message);
+    }
+}
+
+async function removeAdmin(userId) {
+    if (!confirm('确定要移除此管理员吗？')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/admin/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                user_id: userId,
+                action: 'remove'
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            location.reload();
+        } else {
+            alert(result.message || '移除失败');
+        }
+    } catch (error) {
+        alert('操作失败: ' + error.message);
+    }
+}
+
+// 回车键添加管理员
+document.getElementById('newAdminId').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        addAdmin();
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

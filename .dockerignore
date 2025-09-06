@@ -7,3 +7,5 @@ vercel.json
 CHANGELOG.md
 version.txt
 README.MD
+oauth_system.log
+oauth_db.sqlite
